@@ -119,6 +119,19 @@ impl Board {
                         }
                     }
                 }
+                let right = self.index_at(x + 1, y + 1);
+                if let Some(target) = self.get_cell(right)
+                    && target.is_white() != piece.is_white()
+                {
+                    actions.push(Take(right));
+                }
+
+                let left: usize = self.index_at(x - 1, y + 1);
+                if let Some(target) = self.get_cell(left)
+                    && target.is_white() != piece.is_white()
+                {
+                    actions.push(Take(left));
+                }
             }
             Piece::BlackQueen | Piece::WhiteQueen => {
                 let mut x = 0;
