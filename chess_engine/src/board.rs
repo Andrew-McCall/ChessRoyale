@@ -1,5 +1,5 @@
 use crate::{
-    action::Action::{self, Move, Take},
+    action::Action::{self, Enpasant, Move, Take},
     piece::Piece,
 };
 
@@ -56,6 +56,9 @@ impl Board {
     }
 
     pub fn get_cell(&self, index: usize) -> Option<Piece> {
+        if index > self.width * self.height {
+            return None;
+        }
         let piece_val: u16 = self.cells[index];
         if piece_val == 0 {
             return None;
@@ -72,7 +75,7 @@ impl Board {
     }
 
     pub fn xy_at(&self, index: usize) -> (usize, usize) {
-        (index / self.width, index % self.width)
+        (index % self.width, index / self.width)
     }
 
     pub fn size(&self) -> (usize, usize) {
@@ -84,9 +87,39 @@ impl Board {
             Some(piece) => piece,
             None => return Vec::new(),
         };
-        let mut actions = Vec::new();
+        let mut actions = Vec::with_capacity(16);
 
         match piece {
+            Piece::BlackPawn => {
+                let (x, y) = self.xy_at(index);
+
+                let ahead = index + self.width;
+                if self.get_cell(ahead).is_none() {
+                    actions.push(Move(ahead));
+
+                    // Double Jump
+                    if y <= 2 {
+                        let ahead = ahead + self.width;
+                        if self.get_cell(ahead).is_none() {
+                            actions.push(Move(ahead));
+                        }
+                    } else if y == self.height - 4 {
+                        let right = self.index_at(x + 1, y);
+                        if let Some(piece) = self.get_cell(right)
+                            && piece == Piece::WhitePawn
+                        {
+                            actions.push(Enpasant(ahead, right));
+                        }
+
+                        let left: usize = self.index_at(x - 1, y);
+                        if let Some(piece) = self.get_cell(left)
+                            && piece == Piece::WhitePawn
+                        {
+                            actions.push(Enpasant(ahead, left));
+                        }
+                    }
+                }
+            }
             Piece::BlackQueen | Piece::WhiteQueen => {
                 let mut x = 0;
                 let mut y = 0;
